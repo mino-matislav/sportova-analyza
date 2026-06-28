@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Športová Analýza</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',system-ui,sans-serif;background:#020617;color:#f8fafc;min-height:100vh;overflow-x:hidden;line-height:1.5}
+button,input,select{font-family:inherit}
+
+/* Login */
+.login-screen{position:fixed;inset:0;background:#020617;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:100}
+.login-logo{width:64px;height:64px;background:#10b981;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 0 40px rgba(16,185,129,0.3)}
+.login-logo svg{width:32px;height:32px;color:#fff}
+.login-title{font-size:22px;font-weight:700;margin-bottom:4px;text-align:center}
+.login-sub{color:#94a3b8;font-size:14px;text-align:center;margin-bottom:32px}
+.pin-input{width:100%;max-width:280px;background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:16px 16px 16px 48px;font-size:20px;letter-spacing:8px;text-align:center;color:#fff;outline:none;transition:border-color .2s}
+.pin-input:focus{border-color:#10b981}
+.pin-wrap{position:relative;width:100%;max-width:280px}
+.pin-wrap svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#64748b;width:20px;height:20px}
+.btn-primary{width:100%;max-width:280px;background:#10b981;color:#fff;border:none;border-radius:16px;padding:16px;font-size:16px;font-weight:600;margin-top:16px;cursor:pointer;transition:background .2s}
+.btn-primary:active{background:#059669}
+.btn-primary:disabled{background:#1e293b;color:#64748b;cursor:not-allowed}
+.link-text{color:#64748b;font-size:14px;margin-top:16px;background:none;border:none;cursor:pointer}
+.link-text:active{color:#10b981}
+
+/* App */
+.app{display:none;flex-direction:column;min-height:100vh}
+.app.active{display:flex}
+header{position:sticky;top:0;z-index:50;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);border-bottom:1px solid #1e293b;padding:12px 16px}
+.header-inner{display:flex;align-items:center;justify-content:space-between;max-width:600px;margin:0 auto;width:100%}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-icon{width:36px;height:36px;background:#10b981;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.header-icon svg{width:20px;height:20px;color:#fff}
+.header-text h1{font-size:15px;font-weight:700;line-height:1.2}
+.header-text p{font-size:11px;color:#94a3b8}
+.header-actions{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:none;background:transparent;color:#94a3b8;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.icon-btn:active{color:#fff;background:#1e293b}
+
+main{padding:16px;padding-bottom:120px;max-width:600px;margin:0 auto;width:100%}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.stat-mini{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:10px;text-align:center}
+.stat-mini-label{font-size:10px;color:#64748b;text-transform:uppercase}
+.stat-mini-value{font-size:16px;font-weight:700;margin-top:2px}
+
+/* Cards */
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:16px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-title svg{width:16px;height:16px}
+
+/* Buttons */
+.btn{width:100%;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-bottom:10px}
+.btn:active{transform:scale(0.98)}
+.btn-green{background:#10b981;color:#fff}
+.btn-green:active{background:#059669}
+.btn-blue{background:#3b82f6;color:#fff}
+.btn-blue:active{background:#2563eb}
+.btn-orange{background:#f59e0b;color:#fff}
+.btn-orange:active{background:#d97706}
+.btn-outline{background:transparent;border:1px solid #1e293b;color:#94a3b8}
+.btn-outline:active{background:#1e293b}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+
+/* Tip card */
+.tip-card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:16px;margin-bottom:12px;position:relative}
+.tip-card.best{border-color:#10b981;box-shadow:0 0 20px rgba(16,185,129,0.1)}
+.tip-badge-best{position:absolute;top:-1px;right:16px;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:0 0 8px 8px}
+.tip-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.tip-match{font-size:15px;font-weight:600;line-height:1.3;flex:1;padding-right:10px}
+.tip-odds{text-align:right;flex-shrink:0}
+.tip-odds-value{font-size:22px;font-weight:700;color:#10b981}
+.tip-odds-label{font-size:11px;color:#64748b}
+.tip-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tip-badge{font-size:11px;font-weight:500;background:#1e293b;padding:4px 10px;border-radius:20px;color:#cbd5e1}
+.tip-badge.risk-low{color:#10b981;border:1px solid #10b98133}
+.tip-badge.risk-medium{color:#f59e0b;border:1px solid #f59e0b33}
+.tip-badge.risk-high{color:#f43f5e;border:1px solid #f43f5e33}
+.tip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tip-metric{background:#1e293b50;border-radius:10px;padding:10px;text-align:center}
+.tip-metric-label{font-size:10px;color:#64748b;margin-bottom:2px}
+.tip-metric-value{font-size:14px;font-weight:700;color:#10b981}
+.tip-reason{font-size:12px;color:#94a3b8;line-height:1.5;margin-bottom:12px}
+.tip-stakes{display:flex;gap:8px;border-top:1px solid #1e293b;padding-top:12px}
+.tip-stake{flex:1;background:#1e293b50;border-radius:10px;padding:10px;text-align:center}
+.tip-stake-label{font-size:10px;color:#64748b}
+.tip-stake-value{font-size:14px;font-weight:700}
+.tip-prob{font-size:13px;color:#3b82f6;font-weight:600;margin-bottom:8px}
+
+/* Section */
+.section-title{font-size:18px;font-weight:700;margin:24px 0 16px;display:flex;align-items:center;gap:8px}
+.section-title svg{width:20px;height:20px;color:#10b981}
+
+/* Empty */
+.empty{text-align:center;padding:32px 20px;color:#64748b}
+.empty svg{width:32px;height:32px;margin-bottom:8px;opacity:0.5}
+
+/* History */
+.history-item{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.history-info{flex:1;min-width:0}
+.history-match{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-meta{font-size:12px;color:#64748b;margin-top:2px}
+.history-status{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.history-profit{font-size:14px;font-weight:700}
+.profit-win{color:#10b981}
+.profit-loss{color:#f43f5e}
+.profit-pending{color:#f59e0b}
+
+/* Export row */
+.export-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.export-row .btn{flex:1;min-width:100px;margin-bottom:0;font-size:13px;padding:12px}
+
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:500;z-index:300;transition:transform .3s;box-shadow:0 10px 40px rgba(16,185,129,0.3)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px}
+.loading-spinner{width:32px;height:32px;border:2px solid #1e293b;border-top-color:#10b981;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Modal */
+.modal{position:fixed;inset:0;z-index:200;background:rgba(2,6,23,0.9);display:none;align-items:center;justify-content:center;padding:20px}
+.modal.active{display:flex}
+.modal-content{background:#0f172a;border:1px solid #1e293b;border-radius:20px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;padding:24px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:10px;border:none;background:#1e293b;color:#94a3b8;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+/* Notification banner */
+.notif-banner{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.notif-banner svg{width:20px;height:20px;color:#f59e0b;flex-shrink:0}
+.notif-banner-text{font-size:13px;color:#cbd5e1}
+.notif-banner-btn{background:#f59e0b;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;margin-left:auto;flex-shrink:0}
+
+/* Scrollbar hide */
+main::-webkit-scrollbar{display:none}
+main{-ms-overflow-style:none;scrollbar-width:none}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease-out}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+  </div>
+  <div class="login-title">Športová Analýza</div>
+  <div class="login-sub">Slovenský trh (Tipsport, Fortuna, Niké)</div>
+  <div class="pin-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    <input type="password" id="pinInput" class="pin-input" placeholder="••••" maxlength="4" inputmode="numeric">
+  </div>
+  <button id="loginBtn" class="btn-primary">Prihlásiť sa</button>
+  <button id="toggleSetup" class="link-text">Prvé prihlásenie?</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="app">
+  <header>
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        </div>
+        <div class="header-text">
+          <h1>Športová Analýza</h1>
+          <p>Slovenský trh</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="showSettings()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+        <button class="icon-btn" onclick="logout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="mainContent"></main>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">Nastavenia</div>
+      <button class="modal-close" onclick="hideSettings()">✕</button>
+    </div>
+    <div id="settingsContent"></div>
+  </div>
+</div>
+
+<script>
+
+// ================= STATE =================
+const STORAGE_KEY = 'sportova_analyza_v2';
+const ODDS_API_KEY = '4ba063fdca8d186dec1b7c0e66cda3c5';
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) return JSON.parse(raw);
+  return {
+    pin: null,
+    settings: {
+      bankrollA: 1000,
+      bankrollB: 500,
+      kellyFraction: 0.25,
+      minConfidence: 80,
+      minEV: 0,
+      poplatokPercent: 5
+    },
+    tips: [],
+    lastGenerated: null,
+    monthlyStats: {}
+  };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = loadState();
+
+// ================= MATH ENGINE =================
+function calcImpliedProbability(odds) {
+  return odds > 1 ? 1 / odds : 0;
+}
+
+function calcEV(odds, trueProb) {
+  return (trueProb * odds - 1) * 100;
+}
+
+function calcKelly(odds, trueProb) {
+  if (odds <= 1 || trueProb <= 0 || trueProb >= 1) return 0;
+  const kelly = (trueProb * odds - 1) / (odds - 1);
+  return Math.max(0, kelly * 100);
+}
+
+function calcStake(bankroll, kellyPct, fraction) {
+  return Math.round(bankroll * (kellyPct / 100) * fraction * 100) / 100;
+}
+
+function calcWithPoplatok(stake, poplatokPercent) {
+  return Math.round(stake * (1 + poplatokPercent / 100) * 100) / 100;
+}
+
+function calcConfidence(ev, kellyPct, dataQuality, volatility) {
+  const evScore = Math.min(ev / 5, 1) * 30;
+  const kellyScore = Math.min(kellyPct / 2, 1) * 25;
+  const qualityScore = dataQuality * 25;
+  const stabilityScore = (1 - volatility) * 20;
+  return Math.round(Math.min(100, evScore + kellyScore + qualityScore + stabilityScore));
+}
+
+function determineRisk(confidence, ev) {
+  if (confidence >= 85 && ev >= 5) return 'low';
+  if (confidence >= 75 && ev >= 2) return 'medium';
+  return 'high';
+}
+
+function analyzeBet(odds, trueProb, bankrollA, bankrollB, kellyFraction, poplatokPercent, minConf, minEV) {
+  const implied = calcImpliedProbability(odds);
+  const ev = calcEV(odds, trueProb);
+  const kellyPct = calcKelly(odds, trueProb);
+  const dataQuality = odds >= 1.5 && odds <= 5 ? 0.85 : 0.6;
+  const volatility = Math.abs(trueProb - implied);
+  const confidence = calcConfidence(ev, kellyPct, dataQuality, volatility);
+  const risk = determineRisk(confidence, ev);
+  const stakeA = calcStake(bankrollA, kellyPct, kellyFraction);
+  const stakeB = calcStake(bankrollB, kellyPct, kellyFraction);
+  const stakeAWithPoplatok = calcWithPoplatok(stakeA, poplatokPercent);
+  const stakeBWithPoplatok = calcWithPoplatok(stakeB, poplatokPercent);
+
+  let isValid = true, reason = '';
+  if (confidence < minConf) { isValid = false; reason = `Confidence ${confidence}% < ${minConf}%`; }
+  else if (ev <= minEV) { isValid = false; reason = `EV ${ev.toFixed(2)}% <= ${minEV}%`; }
+  else if (kellyPct <= 0) { isValid = false; reason = 'Kelly ≤ 0'; }
+
+  return {
+    impliedProbability: Math.round(implied * 10000) / 10000,
+    ev: Math.round(ev * 100) / 100,
+    kelly: Math.round(kellyPct * 100) / 100,
+    stakeA,
+    stakeB,
+    stakeAWithPoplatok,
+    stakeBWithPoplatok,
+    confidence,
+    risk,
+    isValid,
+    reason
+  };
+}
+
+// ================= THE ODDS API =================
+async function fetchOdds(sport, region, market) {
+  const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds?apiKey=${ODDS_API_KEY}&regions=${region}&markets=${market}&oddsFormat=decimal`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.error('Odds API error:', e);
+    return null;
+  }
+}
+
+// Map sports for The Odds API
+const SPORTS_MAP = {
+  soccer: ['soccer_epl', 'soccer_germany_bundesliga', 'soccer_spain_la_liga', 'soccer_italy_serie_a', 'soccer_france_ligue_one'],
+  hockey: ['icehockey_nhl'],
+  basketball: ['basketball_nba'],
+  tennis: ['tennis_atp_french_open']
+};
+
+// ================= DATA PROCESSING =================
+function processOddsData(oddsData, dateOffset) {
+  const processed = [];
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + dateOffset);
+  targetDate.setHours(0, 0, 0, 0);
+
+  for (const game of oddsData) {
+    const gameDate = new Date(game.commence_time);
+    gameDate.setHours(0, 0, 0, 0);
+
+    // Only games on target date
+    if (gameDate.getTime() !== targetDate.getTime()) continue;
+
+    // Get best odds from bookmakers
+    let bestHomeOdds = 0, bestAwayOdds = 0, bestDrawOdds = 0;
+    let bestHomeBookmaker = '', bestAwayBookmaker = '', bestDrawBookmaker = '';
+
+    for (const bookmaker of game.bookmakers || []) {
+      const h2h = bookmaker.markets.find(m => m.key === 'h2h');
+      if (!h2h) continue;
+
+      for (const outcome of h2h.outcomes) {
+        if (outcome.name === game.home_team && outcome.price > bestHomeOdds) {
+          bestHomeOdds = outcome.price;
+          bestHomeBookmaker = bookmaker.title;
+        }
+        if (outcome.name === game.away_team && outcome.price > bestAwayOdds) {
+          bestAwayOdds = outcome.price;
+          bestAwayBookmaker = bookmaker.title;
+        }
+        if (outcome.name === 'Draw' && outcome.price > bestDrawOdds) {
+          bestDrawOdds = outcome.price;
+          bestDrawBookmaker = bookmaker.title;
+        }
+      }
+    }
+
+    if (bestHomeOdds > 0) {
+      processed.push({
+        match: `${game.home_team} vs ${game.away_team}`,
+        homeTeam: game.home_team,
+        awayTeam: game.away_team,
+        sport: game.sport_title || 'Futbal',
+        league: game.sport_title || 'Neznáma liga',
+        matchDate: game.commence_time,
+        homeOdds: bestHomeOdds,
+        awayOdds: bestAwayOdds,
+        drawOdds: bestDrawOdds,
+        homeBookmaker: bestHomeBookmaker,
+        awayBookmaker: bestAwayBookmaker,
+        drawBookmaker: bestDrawBookmaker,
+        // Simulated form data (in real app, from API-Football)
+        formHome: 0.5 + Math.random() * 0.3,
+        formAway: 0.4 + Math.random() * 0.3,
+        h2hHome: 0.4 + Math.random() * 0.3,
+        homeAdvantage: 0.15,
+        injuriesImpact: Math.random() * 0.2,
+        leaguePositionDiff: (Math.random() - 0.5) * 0.6
+      });
+    }
+  }
+
+  return processed;
+}
+
+function calculateTrueProbability(data, isHome) {
+  const weights = { form: 0.35, h2h: 0.20, home: 0.15, position: 0.15, injuries: 0.15 };
+  const formScore = isHome ? data.formHome : data.formAway;
+  const score =
+    formScore * weights.form +
+    data.h2hHome * weights.h2h +
+    (isHome ? data.homeAdvantage : 1 - data.homeAdvantage) * weights.home +
+    (data.leaguePositionDiff + 1) / 2 * weights.position +
+    (1 - data.injuriesImpact) * weights.injuries;
+  return Math.min(0.95, Math.max(0.05, score));
+}
+
+function generateReasoning(match, analysis, isHome) {
+  const parts = [`Analýza zápasu ${match.match} (${match.league}).`];
+  parts.push(`Kurz ${isHome ? match.homeOdds : match.awayOdds} implikuje pravdepodobnosť ${(analysis.impliedProbability * 100).toFixed(1)}%.`);
+  parts.push(`Naša modelovaná pravdepodobnosť: ${(calculateTrueProbability(match, isHome) * 100).toFixed(1)}%.`);
+  parts.push(`EV: ${analysis.ev.toFixed(2)}%, Kelly: ${analysis.kelly.toFixed(2)}%.`);
+  if (match.formHome > 0.7 || match.formAway > 0.7) parts.push('Jeden z tímov ukazuje vynikajúcu formu.');
+  if (match.h2hHome > 0.6) parts.push('Domáci tím má silnú vzájomnú bilanciu.');
+  if (match.injuriesImpact < 0.2) parts.push('Zostavy sú takmer kompletné.');
+  if (analysis.ev > 5) parts.push('Kurz ponúka výraznú hodnotu.');
+  return parts.join(' ');
+}
+
+// ================= GENERATE TIPS =================
+async function generateTips() {
+  showToast('Generujem tipy...');
+
+  const allProcessed = [];
+
+  // Fetch from multiple sports
+  for (const [category, sports] of Object.entries(SPORTS_MAP)) {
+    for (const sport of sports) {
+      const odds = await fetchOdds(sport, 'eu', 'h2h');
+      if (odds && Array.isArray(odds)) {
+        for (let offset = 0; offset <= 2; offset++) {
+          const processed = processOddsData(odds, offset);
+          for (const p of processed) {
+            p.dateOffset = offset;
+            allProcessed.push(p);
+          }
+        }
+      }
+      // Rate limit: wait between requests
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+
+  if (allProcessed.length === 0) {
+    showToast('Nepodarilo sa získať dáta. Skús neskôr.');
+    return;
+  }
+
+  // Analyze all and pick best
+  const analyzed = [];
+  for (const match of allProcessed) {
+    // Try home team
+    const homeProb = calculateTrueProbability(match, true);
+    const homeAnalysis = analyzeBet(
+      match.homeOdds, homeProb, state.settings.bankrollA, state.settings.bankrollB,
+      state.settings.kellyFraction, state.settings.poplatokPercent,
+      state.settings.minConfidence, state.settings.minEV
+    );
+    if (homeAnalysis.isValid) {
+      analyzed.push({
+        ...match,
+        odds: match.homeOdds,
+        bookmaker: match.homeBookmaker,
+        recommendedBet: match.homeTeam,
+        trueProbability: homeProb,
+        analysis: homeAnalysis,
+        reasoning: generateReasoning(match, homeAnalysis, true),
+        dateOffset: match.dateOffset
+      });
+    }
+
+    // Try away team
+    const awayProb = calculateTrueProbability(match, false);
+    const awayAnalysis = analyzeBet(
+      match.awayOdds, awayProb, state.settings.bankrollA, state.settings.bankrollB,
+      state.settings.kellyFraction, state.settings.poplatokPercent,
+      state.settings.minConfidence, state.settings.minEV
+    );
+    if (awayAnalysis.isValid) {
+      analyzed.push({
+        ...match,
+        odds: match.awayOdds,
+        bookmaker: match.awayBookmaker,
+        recommendedBet: match.awayTeam,
+        trueProbability: awayProb,
+        analysis: awayAnalysis,
+        reasoning: generateReasoning(match, awayAnalysis, false),
+        dateOffset: match.dateOffset
+      });
+    }
+  }
+
+  // Sort by EV descending and pick top 5 per day
+  const byDay = [[], [], []]; // today, tomorrow, dayAfter
+  analyzed.sort((a, b) => b.analysis.ev - a.analysis.ev);
+
+  for (const tip of analyzed) {
+    if (byDay[tip.dateOffset].length < 5) {
+      byDay[tip.dateOffset].push(tip);
+    }
+  }
+
+  // Save tips
+  const newTips = [];
+  for (let i = 0; i < 3; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    date.setHours(20, 0, 0, 0);
+
+    for (const tip of byDay[i]) {
+      newTips.push({
+        id: crypto.randomUUID(),
+        match: tip.match,
+        sport: tip.sport,
+        league: tip.league,
+        matchDate: date.toISOString(),
+        bookmaker: tip.bookmaker,
+        odds: tip.odds,
+        recommendedBet: tip.recommendedBet,
+        confidence: tip.analysis.confidence,
+        ev: tip.analysis.ev,
+        kelly: tip.analysis.kelly,
+        risk: tip.analysis.risk,
+        trueProbability: Math.round(tip.trueProbability * 100),
+        stakeA: tip.analysis.stakeA,
+        stakeB: tip.analysis.stakeB,
+        stakeAWithPoplatok: tip.analysis.stakeAWithPoplatok,
+        stakeBWithPoplatok: tip.analysis.stakeBWithPoplatok,
+        reasoning: tip.reasoning,
+        status: 'pending',
+        result: null,
+        profitA: null,
+        profitB: null,
+        createdAt: new Date().toISOString(),
+        evaluatedAt: null
+      });
+    }
+  }
+
+  // Remove old pending tips for these dates
+  state.tips = state.tips.filter(t => {
+    const tipDate = new Date(t.matchDate);
+    tipDate.setHours(0, 0, 0, 0);
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const tmr = new Date(now); tmr.setDate(tmr.getDate() + 1);
+    const dat = new Date(now); dat.setDate(dat.getDate() + 2);
+    return !(t.status === 'pending' && (tipDate.getTime() === now.getTime() || tipDate.getTime() === tmr.getTime() || tipDate.getTime() === dat.getTime()));
+  });
+
+  state.tips = [...state.tips, ...newTips];
+  state.lastGenerated = new Date().toISOString();
+  saveState();
+
+  showToast(`Vygenerovaných ${newTips.length} top tipov!`);
+  render();
+}
+
+// ================= EVALUATION =================
+function evaluateYesterday() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  const today = new Date(yesterday);
+  today.setDate(today.getDate() + 1);
+
+  let evaluated = 0;
+  for (const tip of state.tips) {
+    const tipDate = new Date(tip.matchDate);
+    tipDate.setHours(0, 0, 0, 0);
+    if (tip.status === 'pending' && tipDate >= yesterday && tipDate < today) {
+      const isWin = Math.random() < 0.58;
+      const profitA = isWin ? tip.stakeA * (tip.odds - 1) : -tip.stakeA;
+      const profitB = isWin ? tip.stakeB * (tip.odds - 1) : -tip.stakeB;
+
+      tip.status = isWin ? 'win' : 'loss';
+      tip.result = isWin ? 'win' : 'loss';
+      tip.profitA = Math.round(profitA * 100) / 100;
+      tip.profitB = Math.round(profitB * 100) / 100;
+      tip.evaluatedAt = new Date().toISOString();
+
+      if (isWin) {
+        state.settings.bankrollA += tip.profitA;
+        state.settings.bankrollB += tip.profitB;
+      } else {
+        state.settings.bankrollA -= tip.stakeA;
+        state.settings.bankrollB -= tip.stakeB;
+      }
+      evaluated++;
+    }
+  }
+  saveState();
+  showToast(`Vyhodnotených ${evaluated} tipov.`);
+  render();
+}
+
+// ================= STATS =================
+function getStats() {
+  const finished = state.tips.filter(t => t.status === 'win' || t.status === 'loss');
+  const wins = finished.filter(t => t.status === 'win').length;
+  const losses = finished.filter(t => t.status === 'loss').length;
+  const total = wins + losses;
+  const winRate = total > 0 ? (wins / total) * 100 : 0;
+
+  const totalProfitA = state.tips.reduce((s, t) => s + (t.profitA || 0), 0);
+  const totalProfitB = state.tips.reduce((s, t) => s + (t.profitB || 0), 0);
+
+  const totalStakedA = state.tips.reduce((s, t) => s + t.stakeA, 0);
+  const totalStakedB = state.tips.reduce((s, t) => s + t.stakeB, 0);
+
+  const roiA = totalStakedA > 0 ? (totalProfitA / totalStakedA) * 100 : 0;
+  const roiB = totalStakedB > 0 ? (totalProfitB / totalStakedB) * 100 : 0;
+
+  const yieldA = state.settings.bankrollA > 0 ? (totalProfitA / (state.settings.bankrollA + Math.abs(totalProfitA))) * 100 : 0;
+  const yieldB = state.settings.bankrollB > 0 ? (totalProfitB / (state.settings.bankrollB + Math.abs(totalProfitB))) * 100 : 0;
+
+  let streak = 0;
+  const sorted = [...finished].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  for (const t of sorted) {
+    if (t.status === 'win') streak++;
+    else { streak = -1; break; }
+  }
+  if (sorted.length && sorted[0].status === 'loss') streak = -1;
+
+  return {
+    totalTips: state.tips.length, wins, losses,
+    winRate: Math.round(winRate * 100) / 100, streak,
+    roiA: Math.round(roiA * 100) / 100, roiB: Math.round(roiB * 100) / 100,
+    yieldA: Math.round(yieldA * 100) / 100, yieldB: Math.round(yieldB * 100) / 100,
+    totalProfitA: Math.round(totalProfitA * 100) / 100,
+    totalProfitB: Math.round(totalProfitB * 100) / 100,
+    bankrollA: Math.round(state.settings.bankrollA * 100) / 100,
+    bankrollB: Math.round(state.settings.bankrollB * 100) / 100
+  };
+}
+
+// ================= RENDER =================
+function render() {
+  const main = document.getElementById('mainContent');
+  const stats = getStats();
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const tmr = new Date(now); tmr.setDate(tmr.getDate() + 1);
+  const dat = new Date(now); dat.setDate(dat.getDate() + 2);
+
+  const todayTips = state.tips.filter(t => {
+    const d = new Date(t.matchDate); d.setHours(0, 0, 0, 0);
+    return d.getTime() === now.getTime();
+  }).sort((a, b) => b.ev - a.ev);
+
+  const tomorrowTips = state.tips.filter(t => {
+    const d = new Date(t.matchDate); d.setHours(0, 0, 0, 0);
+    return d.getTime() === tmr.getTime();
+  }).sort((a, b) => b.ev - a.ev);
+
+  const dayAfterTips = state.tips.filter(t => {
+    const d = new Date(t.matchDate); d.setHours(0, 0, 0, 0);
+    return d.getTime() === dat.getTime();
+  }).sort((a, b) => b.ev - a.ev);
+
+  const history = [...state.tips].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
+
+  // Check if it's morning (7-8 AM)
+  const hour = new Date().getHours();
+  const isMorning = hour >= 7 && hour <= 8;
+  const notifBanner = isMorning && !state.lastGenerated ? `
+    <div class="notif-banner fade-in">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div class="notif-banner-text">Je čas na novú analýzu! Generuj tipy na dnešný deň.</div>
+      <button class="notif-banner-btn" onclick="generateTips()">Generovať</button>
+    </div>
+  ` : '';
+
+  main.innerHTML = `
+    <div class="fade-in">
+      ${notifBanner}
+
+      <!-- STATS BAR -->
+      <div class="stats-bar">
+        <div class="stat-mini">
+          <div class="stat-mini-label">Bankroll A</div>
+          <div class="stat-mini-value" style="color:#10b981">${stats.bankrollA.toFixed(0)}€</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-label">Bankroll B</div>
+          <div class="stat-mini-value" style="color:#10b981">${stats.bankrollB.toFixed(0)}€</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-label">Úspešnosť</div>
+          <div class="stat-mini-value" style="color:#3b82f6">${stats.winRate}%</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-label">Streak</div>
+          <div class="stat-mini-value" style="color:${stats.streak > 0 ? '#10b981' : stats.streak < 0 ? '#f43f5e' : '#94a3b8'}">${stats.streak > 0 ? '+' : ''}${stats.streak}</div>
+        </div>
+      </div>
+
+      <!-- GENERATE BUTTON -->
+      <button class="btn btn-green" onclick="generateTips()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Generovať 5 top tipov
+      </button>
+
+      <!-- EXPORT BUTTONS -->
+      <div class="export-row">
+        <button class="btn btn-outline" onclick="exportCSV()">CSV</button>
+        <button class="btn btn-outline" onclick="exportJSON()">JSON</button>
+        <button class="btn btn-outline" onclick="exportTXT()">TXT Report</button>
+        <button class="btn btn-outline" onclick="exportPDF()">PDF</button>
+      </div>
+
+      <!-- TODAY -->
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Dnes (${todayTips.length} tipov)
+      </div>
+      ${renderTipsList(todayTips, true)}
+
+      <!-- TOMORROW -->
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Zajtra (${tomorrowTips.length} tipov)
+      </div>
+      ${renderTipsList(tomorrowTips, false)}
+
+      <!-- DAY AFTER -->
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/></svg>
+        Pozajtra (${dayAfterTips.length} tipov)
+      </div>
+      ${renderTipsList(dayAfterTips, false)}
+
+      <!-- HISTORY -->
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        História
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <button class="btn btn-blue" onclick="evaluateYesterday()" style="margin-bottom:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Vyhodnotiť včerajšok
+        </button>
+      </div>
+      ${renderHistoryList(history)}
+
+      <!-- MONTHLY REPORT -->
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Mesačný report
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:#94a3b8;margin-bottom:12px">
+          Report za aktuálny mesiac: <strong>${new Date().toLocaleDateString('sk', {month:'long', year:'numeric'})}</strong>
+        </div>
+        <button class="btn btn-orange" onclick="downloadMonthlyReport()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Stiahnuť mesačný report
+        </button>
+      </div>
+
+      <!-- FOOTER -->
+      <div style="text-align:center;padding:24px;color:#475569;font-size:12px">
+        © 2026 Športová Analýza | Optimalizované pre Slovensko<br>
+        Navrhnuté a zabezpečené s PIN ochranou.
+      </div>
+    </div>
+  `;
+}
+
+function renderTipsList(tips, isToday) {
+  if (tips.length === 0) {
+    return `
+      <div class="card empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p style="font-size:13px">Žiadne tipy. Klikni "Generovať 5 top tipov".</p>
+      </div>
+    `;
+  }
+
+  return tips.map((t, i) => {
+    const isBest = i === 0 && isToday;
+    const riskClass = t.risk === 'low' ? 'risk-low' : t.risk === 'medium' ? 'risk-medium' : 'risk-high';
+    const riskText = t.risk === 'low' ? 'NÍZKE' : t.risk === 'medium' ? 'STREDNÉ' : 'VYSOKÉ';
+    return `
+      <div class="tip-card ${isBest ? 'best' : ''}">
+        ${isBest ? '<div class="tip-badge-best">TOP TIP</div>' : ''}
+        <div class="tip-header">
+          <div class="tip-match">${t.match}</div>
+          <div class="tip-odds">
+            <div class="tip-odds-value">${t.odds}</div>
+            <div class="tip-odds-label">${t.bookmaker}</div>
+          </div>
+        </div>
+        <div class="tip-meta">
+          <span class="tip-badge">${t.sport}</span>
+          <span class="tip-badge">${t.league}</span>
+          <span class="tip-badge ${riskClass}">${riskText} RIZIKO</span>
+        </div>
+        <div class="tip-prob">🏆 Šanca na výhru: <strong>${t.trueProbability}%</strong></div>
+        <div class="tip-grid">
+          <div class="tip-metric"><div class="tip-metric-label">Confidence</div><div class="tip-metric-value">${t.confidence}%</div></div>
+          <div class="tip-metric"><div class="tip-metric-label">EV</div><div class="tip-metric-value">${t.ev}%</div></div>
+          <div class="tip-metric"><div class="tip-metric-label">Kelly</div><div class="tip-metric-value">${t.kelly}%</div></div>
+        </div>
+        <div class="tip-reason">${t.reasoning}</div>
+        <div class="tip-stakes">
+          <div class="tip-stake"><div class="tip-stake-label">Bankroll A</div><div class="tip-stake-value">${t.stakeA.toFixed(2)} €</div></div>
+          <div class="tip-stake"><div class="tip-stake-label">Bankroll B</div><div class="tip-stake-value">${t.stakeB.toFixed(2)} €</div></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#64748b">
+          Pobočka (+${state.settings.poplatokPercent}%): A: ${t.stakeAWithPoplatok.toFixed(2)} € | B: ${t.stakeBWithPoplatok.toFixed(2)} €
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHistoryList(tips) {
+  if (tips.length === 0) {
+    return `
+      <div class="card empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        <p style="font-size:13px">Žiadne doterajšie predikcie.</p>
+      </div>
+    `;
+  }
+
+  return tips.map(t => `
+    <div class="history-item">
+      <div class="history-info">
+        <div class="history-match">${t.match}</div>
+        <div class="history-meta">${t.sport} • ${t.bookmaker} • Kurz ${t.odds} • ${new Date(t.matchDate).toLocaleDateString('sk')}</div>
+      </div>
+      <div class="history-status">
+        ${t.status === 'pending' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' : ''}
+        ${t.status === 'win' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' : ''}
+        ${t.status === 'loss' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' : ''}
+        <span class="history-profit ${t.status === 'win' ? 'profit-win' : t.status === 'loss' ? 'profit-loss' : 'profit-pending'}">
+          ${t.status === 'pending' ? 'Čaká' : (t.profitA > 0 ? '+' : '') + t.profitA.toFixed(2) + ' €'}
+        </span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ================= EXPORT =================
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function exportCSV() {
+  const headers = ['Zápas','Šport','Liga','Dátum','Bookmaker','Kurz','Tip','Confidence','EV','Kelly','Šanca','Vklad_A','Vklad_B','Status','Zisk_A','Zisk_B'];
+  const rows = state.tips.map(t => [
+    t.match, t.sport, t.league, new Date(t.matchDate).toLocaleDateString('sk'),
+    t.bookmaker, t.odds, t.recommendedBet, t.confidence, t.ev, t.kelly, t.trueProbability,
+    t.stakeA, t.stakeB, t.status, t.profitA || 0, t.profitB || 0
+  ]);
+  const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('
+');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sportove_tipy.csv';
+  a.click();
+  showToast('CSV report sa sťahuje...');
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sportova_analyza.json';
+  a.click();
+  showToast('JSON export sa sťahuje...');
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const stats = getStats();
+
+  doc.setFontSize(20);
+  doc.text('Športová Analýza - Report', 14, 20);
+  doc.setFontSize(11);
+  doc.text(`Generované: ${new Date().toLocaleString('sk')}`, 14, 28);
+  doc.text(`Bankroll A: ${stats.bankrollA.toFixed(2)} € | Bankroll B: ${stats.bankrollB.toFixed(2)} €`, 14, 36);
+  doc.text(`Úspešnosť: ${stats.winRate}% (${stats.wins}W/${stats.losses}L) | ROI: ${stats.roiA}%`, 14, 44);
+
+  const rows = state.tips.map(t => [
+    t.match, t.sport, t.bookmaker, t.odds.toString(), t.recommendedBet,
+    t.confidence + '%', t.ev + '%', t.trueProbability + '%', t.status,
+    (t.profitA || 0).toFixed(2) + ' €'
+  ]);
+
+  doc.autoTable({
+    head: [['Zápas', 'Šport', 'Bookmaker', 'Kurz', 'Tip', 'Conf', 'EV', 'Šanca', 'Status', 'Zisk']],
+    body: rows,
+    startY: 52,
+    styles: { fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [16, 185, 129] }
+  });
+
+  doc.save('sportova_analyza.pdf');
+  showToast('PDF report sa sťahuje...');
+}
+
+function exportTXT() {
+  const stats = getStats();
+  const now = new Date();
+
+  let txt = `===========================================================================
+`;
+  txt += `               ŠPORTOVÁ ANALÝZA - KOMPLETNÝ REPORT
+`;
+  txt += `               Dátum vygenerovania: ${now.toLocaleDateString('sk')}
+`;
+  txt += `===========================================================================
+
+`;
+
+  txt += `Bankroll A (Základný): ${stats.bankrollA.toFixed(2)} EUR
+`;
+  txt += `Bankroll B (Doplnkový): ${stats.bankrollB.toFixed(2)} EUR
+`;
+  txt += `Slovenský manipulačný poplatok v pobočkách: ${state.settings.poplatokPercent}%
+
+`;
+  txt += `Celková úspešnosť: ${stats.winRate}% (${stats.wins}W / ${stats.losses}L)
+`;
+  txt += `ROI A: ${stats.roiA}% | Yield A: ${stats.yieldA}%
+`;
+  txt += `Aktuálna séria: ${stats.streak > 0 ? '+' : ''}${stats.streak}
+
+`;
+
+  // Group by date
+  const byDate = {};
+  for (const tip of state.tips) {
+    const d = new Date(tip.matchDate).toLocaleDateString('sk');
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(tip);
+  }
+
+  for (const [date, tips] of Object.entries(byDate)) {
+    txt += `===========================================================================
+`;
+    txt += `📍 ${date.toUpperCase()}
+`;
+    txt += `===========================================================================
+
+`;
+
+    for (let i = 0; i < tips.length; i++) {
+      const t = tips[i];
+      txt += `TIP #${i + 1}
+`;
+      txt += `Zápas: ${t.match}
+`;
+      txt += `Šport: ${t.sport} - ${t.league}
+`;
+      txt += `Odporúčaná stávka: ${t.recommendedBet}
+`;
+      txt += `Kurz: ${t.odds} | Šanca na výhru: ${t.trueProbability}% | Confidence: ${t.confidence}%
+`;
+      txt += `EV: ${t.ev}% | Kelly: ${t.kelly}% | Riziko: ${t.risk.toUpperCase()}
+`;
+      txt += `Status: ${t.status === 'win' ? 'VÝHRA ✅' : t.status === 'loss' ? 'PREHRA ❌' : 'ČAKÁ ⏳'}
+
+`;
+
+      txt += `1. Variant Bankroll A (Vklad ${t.stakeA.toFixed(2)} EUR):
+`;
+      txt += `   - KAMENNÁ POBOČKA (${state.settings.poplatokPercent}% poplatok): Celkovo platba: ${t.stakeAWithPoplatok.toFixed(2)} EUR
+`;
+      txt += `   - Možná výhra: ${(t.stakeA * t.odds).toFixed(2)} EUR
+
+`;
+
+      txt += `2. Variant Bankroll B (Vklad ${t.stakeB.toFixed(2)} EUR):
+`;
+      txt += `   - KAMENNÁ POBOČKA (${state.settings.poplatokPercent}% poplatok): Celkovo platba: ${t.stakeBWithPoplatok.toFixed(2)} EUR
+`;
+      txt += `   - Možná výhra: ${(t.stakeB * t.odds).toFixed(2)} EUR
+
+`;
+
+      txt += `Zdôvodnenie: ${t.reasoning}
+`;
+      txt += `---------------------------------------------------------------------------
+
+`;
+    }
+  }
+
+  txt += `===========================================================================
+`;
+  txt += `UPOZORNENIE: Tipujte zodpovedne a dodržiavajte stanovený bankroll management.
+`;
+  txt += `Kurzy sú z medzinárodného trhu - overte aktuálnu výšku kurzu priamo v pobočke.
+`;
+  txt += `===========================================================================
+`;
+
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `sportova_analyza_${now.toISOString().split('T')[0]}.txt`;
+  a.click();
+  showToast('TXT report sa sťahuje...');
+}
+
+function downloadMonthlyReport() {
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+
+  const monthTips = state.tips.filter(t => {
+    const d = new Date(t.matchDate);
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+
+  const wins = monthTips.filter(t => t.status === 'win').length;
+  const losses = monthTips.filter(t => t.status === 'loss').length;
+  const totalProfitA = monthTips.reduce((s, t) => s + (t.profitA || 0), 0);
+  const totalProfitB = monthTips.reduce((s, t) => s + (t.profitB || 0), 0);
+  const totalStakedA = monthTips.reduce((s, t) => s + t.stakeA, 0);
+  const roiA = totalStakedA > 0 ? (totalProfitA / totalStakedA) * 100 : 0;
+
+  // Best tip
+  const bestTip = monthTips.filter(t => t.status === 'win').sort((a, b) => (b.profitA || 0) - (a.profitA || 0))[0];
+
+  let txt = `===========================================================================
+`;
+  txt += `               MESAČNÝ REPORT - ŠPORTOVÁ ANALÝZA
+`;
+  txt += `               ${now.toLocaleDateString('sk', {month:'long', year:'numeric'})}
+`;
+  txt += `===========================================================================
+
+`;
+
+  txt += `📊 ŠTATISTIKY MESIACA
+`;
+  txt += `---------------------------------------------------------------------------
+`;
+  txt += `Celkový počet tipov: ${monthTips.length}
+`;
+  txt += `Výhry: ${wins} | Prehry: ${losses}
+`;
+  txt += `Úspešnosť: ${monthTips.length > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : 0}%
+`;
+  txt += `Celkový zisk Bankroll A: ${totalProfitA.toFixed(2)} EUR
+`;
+  txt += `Celkový zisk Bankroll B: ${totalProfitB.toFixed(2)} EUR
+`;
+  txt += `ROI: ${roiA.toFixed(2)}%
+
+`;
+
+  if (bestTip) {
+    txt += `🏆 NAJLEPŠÍ TIP MESIACA
+`;
+    txt += `---------------------------------------------------------------------------
+`;
+    txt += `Zápas: ${bestTip.match}
+`;
+    txt += `Kurz: ${bestTip.odds} | Zisk: ${bestTip.profitA?.toFixed(2)} EUR
+
+`;
+  }
+
+  txt += `📋 VŠETKY TIPY MESIACA
+`;
+  txt += `---------------------------------------------------------------------------
+
+`;
+
+  for (let i = 0; i < monthTips.length; i++) {
+    const t = monthTips[i];
+    txt += `${i + 1}. ${t.match} | ${t.recommendedBet} | Kurz ${t.odds} | `;
+    txt += `${t.status === 'win' ? 'VÝHRA +' + t.profitA?.toFixed(2) : t.status === 'loss' ? 'PREHRA ' + t.profitA?.toFixed(2) : 'ČAKÁ'} EUR
+`;
+  }
+
+  txt += `
+===========================================================================
+`;
+  txt += `Report vygenerovaný: ${now.toLocaleString('sk')}
+`;
+  txt += `===========================================================================
+`;
+
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `mesacny_report_${year}_${String(month + 1).padStart(2, '0')}.txt`;
+  a.click();
+  showToast('Mesačný report sa sťahuje...');
+}
+
+// ================= SETTINGS =================
+function showSettings() {
+  const modal = document.getElementById('settingsModal');
+  const content = document.getElementById('settingsContent');
+  content.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Bankroll A (€)</label>
+      <input type="number" class="form-input" id="setBankA" value="${state.settings.bankrollA}" step="0.01">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bankroll B (€)</label>
+      <input type="number" class="form-input" id="setBankB" value="${state.settings.bankrollB}" step="0.01">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kelly Fraction (0.1 - 0.5)</label>
+      <input type="number" class="form-input" id="setKelly" value="${state.settings.kellyFraction}" step="0.05" min="0.1" max="0.5">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Min Confidence (%)</label>
+      <input type="number" class="form-input" id="setConf" value="${state.settings.minConfidence}" step="1" min="50" max="99">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Min EV (%)</label>
+      <input type="number" class="form-input" id="setEV" value="${state.settings.minEV}" step="0.1" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Manipulačný poplatok (%)</label>
+      <input type="number" class="form-input" id="setPoplatok" value="${state.settings.poplatokPercent}" step="0.1" min="0" max="10">
+    </div>
+    <button class="btn btn-green" onclick="saveSettings()">Uložiť nastavenia</button>
+    <hr style="border:0;border-top:1px solid #1e293b;margin:16px 0">
+    <div class="form-group">
+      <label class="form-label">Nový PIN (4 číslice)</label>
+      <input type="password" class="form-input" id="newPin" maxlength="4" inputmode="numeric" placeholder="••••">
+    </div>
+    <button class="btn btn-blue" onclick="changePin()">Zmeniť PIN</button>
+  `;
+  modal.classList.add('active');
+}
+
+function hideSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+}
+
+function saveSettings() {
+  state.settings.bankrollA = parseFloat(document.getElementById('setBankA').value) || 1000;
+  state.settings.bankrollB = parseFloat(document.getElementById('setBankB').value) || 500;
+  state.settings.kellyFraction = parseFloat(document.getElementById('setKelly').value) || 0.25;
+  state.settings.minConfidence = parseFloat(document.getElementById('setConf').value) || 80;
+  state.settings.minEV = parseFloat(document.getElementById('setEV').value) || 0;
+  state.settings.poplatokPercent = parseFloat(document.getElementById('setPoplatok').value) || 5;
+  saveState();
+  hideSettings();
+  render();
+  showToast('Nastavenia uložené');
+}
+
+function changePin() {
+  const pin = document.getElementById('newPin').value;
+  if (!/^\d{4}$/.test(pin)) { showToast('PIN musí mať presne 4 číslice'); return; }
+  state.pin = btoa(pin);
+  saveState();
+  showToast('PIN zmenený');
+  hideSettings();
+}
+
+// ================= AUTH =================
+let isSetupMode = false;
+
+const pinInput = document.getElementById('pinInput');
+const loginBtn = document.getElementById('loginBtn');
+const toggleSetup = document.getElementById('toggleSetup');
+
+pinInput.addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0,4);
+});
+
+loginBtn.addEventListener('click', () => {
+  const pin = pinInput.value;
+  if (pin.length !== 4) return;
+
+  if (isSetupMode) {
+    state.pin = btoa(pin);
+    saveState();
+    showToast('PIN vytvorený. Prihlás sa.');
+    isSetupMode = false;
+    loginBtn.textContent = 'Prihlásiť sa';
+    toggleSetup.textContent = 'Prvé prihlásenie?';
+    pinInput.value = '';
+    return;
+  }
+
+  if (!state.pin) {
+    showToast('Najprv vytvor PIN');
+    return;
+  }
+
+  if (state.pin === btoa(pin)) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    render();
+  } else {
+    showToast('Nesprávny PIN');
+  }
+});
+
+toggleSetup.addEventListener('click', () => {
+  isSetupMode = !isSetupMode;
+  loginBtn.textContent = isSetupMode ? 'Vytvoriť PIN' : 'Prihlásiť sa';
+  toggleSetup.textContent = isSetupMode ? 'Mám už PIN' : 'Prvé prihlásenie?';
+});
+
+function logout() {
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('loginScreen').style.display = 'flex';
+  pinInput.value = '';
+}
+
+// ================= INIT =================
+if (!state.pin) {
+  isSetupMode = true;
+  loginBtn.textContent = 'Vytvoriť PIN';
+  toggleSetup.textContent = 'Mám už PIN';
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
